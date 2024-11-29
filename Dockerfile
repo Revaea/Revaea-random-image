@@ -6,8 +6,8 @@ COPY index.php /var/www/html/
 COPY pc /var/www/html/pc
 COPY mobile /var/www/html/mobile
 
-# 暴露容器的 80 端口
-EXPOSE 80
+# 暴露容器的 1584 端口
+EXPOSE 1584
 
 # 设置容器启动时执行的命令
-CMD ["php", "-S", "0.0.0.0:80", "-t", "/var/www/html/"]
+CMD ["php", "-S", "0.0.0.0:1584", "-t", "/var/www/html/"]
