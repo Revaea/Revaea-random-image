@@ -1,6 +1,7 @@
 from PIL import Image
 import os
 import hashlib
+import json
 
 
 # 计算文件的哈希值
@@ -65,6 +66,28 @@ def process_images(input_folder, output_folder_landscape, output_folder_portrait
                 print(f"Error processing {image_path}: {e}. Skipping this image.")
 
 
+def generate_image_lists(output_folder_landscape, output_folder_portrait, list_output_path):
+    image_lists = {
+        "small_screens": [],
+        "large_screens": []
+    }
+
+    # 遍历横向图片
+    for filename in os.listdir(output_folder_landscape):
+        if filename.endswith('.webp'):
+            image_lists["large_screens"].append(os.path.join(output_folder_landscape, filename))
+
+    # 遍历纵向图片
+    for filename in os.listdir(output_folder_portrait):
+        if filename.endswith('.webp'):
+            image_lists["small_screens"].append(os.path.join(output_folder_portrait, filename))
+
+    # 保存列表为 JSON 文件
+    with open(list_output_path, "w") as json_file:
+        json.dump(image_lists, json_file)
+    print(f"Image lists saved to {list_output_path}")
+
+
 # 指定输入和输出文件夹
 input_folder = "./photos"
 output_folder_landscape = "./landscape"
@@ -76,3 +99,7 @@ os.makedirs(output_folder_portrait, exist_ok=True)
 
 # 执行转换
 process_images(input_folder, output_folder_landscape, output_folder_portrait)
+
+# 生成图片路径列表
+list_output_path = "./image_lists.json"
+generate_image_lists(output_folder_landscape, output_folder_portrait, list_output_path)
