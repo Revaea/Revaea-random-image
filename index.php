@@ -1,73 +1,64 @@
 <?php
-$pcPath = 'landscape';
-$mobilePath = 'portrait';
-
-// 函数：从目录中获取图片列表
-function getImagesFromDir($path) {
-    $images = array();
-    if ($img_dir = @opendir($path)) {
-        while (false !== ($img_file = readdir($img_dir))) {
-            // 匹配 webp、jpg、jpeg、png、gif 格式的图片
-            if (preg_match("/\.(webp|jpg|jpeg|png|gif)$/i", $img_file)) {
-                $images[] = $img_file;
-            }
-        }
-        closedir($img_dir);
-    }
-    return $images;
-}
-
-// 函数：生成完整的图片路径
-function generateImagePath($path, $img) {
-    return $path . '/' . $img;
-}
+// JSON 文件路径
+$jsonFilePath = './image_lists.json';
 
 // 检测用户代理以区分手机和电脑访问
 $userAgent = $_SERVER['HTTP_USER_AGENT'];
 $isMobile = preg_match('/(android|iphone|ipad|ipod|blackberry|windows phone)/i', $userAgent);
 
-// 根据访问设备设置图片路径
-if ($isMobile) {
-    $path = $mobilePath;
-} else {
-    $path = $pcPath;
+try {
+    // 检查 JSON 文件是否存在
+    if (!file_exists($jsonFilePath)) {
+        throw new Exception("Image list file not found.");
+    }
+
+    // 读取 JSON 文件
+    $jsonContent = file_get_contents($jsonFilePath);
+    $imageLists = json_decode($jsonContent, true);
+
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        throw new Exception("Failed to parse image list JSON.");
+    }
+
+    // 根据设备类型选择图片列表
+    $selectedList = $isMobile ? $imageLists['small_screens'] : $imageLists['large_screens'];
+
+    if (empty($selectedList)) {
+        throw new Exception("No images found in the selected list.");
+    }
+
+    // 随机选择一张图片
+    $randomImage = $selectedList[array_rand($selectedList)];
+
+    // 获取图片的格式
+    $imgExtension = pathinfo($randomImage, PATHINFO_EXTENSION);
+
+    // 根据图片的格式设置 Content-Type
+    switch (strtolower($imgExtension)) {
+        case 'webp':
+            header('Content-Type: image/webp');
+            break;
+        case 'jpg':
+        case 'jpeg':
+            header('Content-Type: image/jpeg');
+            break;
+        case 'png':
+            header('Content-Type: image/png');
+            break;
+        case 'gif':
+            header('Content-Type: image/gif');
+            break;
+        default:
+            throw new Exception("Unsupported image format: $imgExtension");
+    }
+
+    // 输出随机图片
+    readfile($randomImage);
+
+} catch (Exception $e) {
+    // 错误处理
+    header("HTTP/1.1 500 Internal Server Error");
+    echo "Error: " . $e->getMessage();
+    exit;
 }
-
-// 缓存图片列表
-$imgList = getImagesFromDir($path);
-
-// 从列表中随机选择一张图片
-shuffle($imgList);
-$img = reset($imgList);
-
-// 获取图片的格式
-$img_extension = pathinfo($img, PATHINFO_EXTENSION);
-
-// 根据图片的格式设置 Content-Type
-switch ($img_extension) {
-    case 'webp':
-        header('Content-Type: image/webp');
-        break;
-    case 'jpg':
-    case 'jpeg':
-        header('Content-Type: image/jpeg');
-        break;
-    case 'png':
-        header('Content-Type: image/png');
-        break;
-    case 'gif':
-        header('Content-Type: image/gif');
-        break;
-    // 添加其他格式的处理方式
-    // case 'bmp':
-    //     header('Content-Type: image/bmp');
-    //     break;
-}
-
-// 生成完整的图片路径
-$img_path = generateImagePath($path, $img);
-
-// 直接输出所选的随机图片
-readfile($img_path);
 ?>
-
