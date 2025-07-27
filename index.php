@@ -6,6 +6,11 @@ $jsonFilePath = './image_lists.json';
 $userAgent = $_SERVER['HTTP_USER_AGENT'];
 $isMobile = preg_match('/(android|iphone|ipad|ipod|blackberry|windows phone)/i', $userAgent);
 
+// 添加 CORS 头部
+header('Access-Control-Allow-Origin: *');  // 允许所有域访问，如果需要只允许特定域，请修改为 'http://localhost:8080'
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');  // 允许的 HTTP 方法
+header('Access-Control-Allow-Headers: Content-Type, Authorization');  // 允许的请求头
+
 try {
     // 检查 JSON 文件是否存在
     if (!file_exists($jsonFilePath)) {
@@ -29,6 +34,15 @@ try {
 
     // 随机选择一张图片
     $randomImage = $selectedList[array_rand($selectedList)];
+
+    $randomImage = $selectedList[array_rand($selectedList)];
+    $randomImage .= '?t=' . time(); // 或 '?v=' . uniqid();
+
+
+    // 禁用浏览器缓存
+    header('Cache-Control: no-cache, no-store, must-revalidate');
+    header('Pragma: no-cache');
+    header('Expires: 0');
 
     // 获取图片的格式
     $imgExtension = pathinfo($randomImage, PATHINFO_EXTENSION);
