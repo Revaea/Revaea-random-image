@@ -1,34 +1,9 @@
 ### 搭建一个简单的随机图片API，支持Docker部署
 
-### 项目地址
-
-[https://github.com/Nei-Xin/random-pic-api](https://github.com/Nei-Xin/random-pic-api)
-
-### 更新
-
-#### 2024.5.27
-
-##### 新增
-
-- /pc路径，显示横屏图片，例如：[https://api.neix.in/random/pc](https://api.neix.in/random/pc)
-
-![https://api.neix.in/random/pc](https://api.neix.in/random/pc)
-
-- /mobile，显示竖屏图片，例如：[https://api.neix.in/random/mobile](https://api.neix.in/random/mobile)
-
-![https://api.neix.in/random/mobile](https://api.neix.in/random/mobile)
-
-- 镜像大小减小了
 
 #### 简介
 
 随机图片 API 是一种允许开发者从一个图片库或者指定的目录中获取随机图片的接口。这种 API 通常用于网站、移动应用程序或其他软件中，以便动态地展示随机图片，例如用作背景图片、占位图、或者其他需要随机化内容的场景。
-
-### 在线体验
-
-[https://api.neix.in/random](https://api.zzii.de/random)
-
-![https://api.neix.in/random](https://api.neix.in/random)
 
 ### 特性
 
@@ -114,9 +89,3 @@ process_images(input_folder, output_folder_landscape, output_folder_portrait)
 #### 作用
 
 将横屏和竖屏的图片分开，并转化为webp格式，使用时注意修改文件路径
-
-### 最后
-
-如果觉得还不错的话，可以点个star
-
-个人博客地址：[Joy's Blog](https://blog.gckjoy.com/)

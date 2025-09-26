@@ -3,3 +3,14 @@
 # /__pycache__
 # /build
 # /dist
+/.idea
+/.well-known
+*.ini
+.htaccess
+*.json
+index.html
+/landscape
+/photos
+/portrait
+*.html
+watch_photos.sh

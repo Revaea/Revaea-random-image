@@ -7,9 +7,9 @@ $userAgent = $_SERVER['HTTP_USER_AGENT'];
 $isMobile = preg_match('/(android|iphone|ipad|ipod|blackberry|windows phone)/i', $userAgent);
 
 // 添加 CORS 头部
-header('Access-Control-Allow-Origin: *');  // 允许所有域访问，如果需要只允许特定域，请修改为 'http://localhost:8080'
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');  // 允许的 HTTP 方法
-header('Access-Control-Allow-Headers: Content-Type, Authorization');  // 允许的请求头
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 try {
     // 检查 JSON 文件是否存在
@@ -35,14 +35,20 @@ try {
     // 随机选择一张图片
     $randomImage = $selectedList[array_rand($selectedList)];
 
-    $randomImage = $selectedList[array_rand($selectedList)];
-    $randomImage .= '?t=' . time(); // 或 '?v=' . uniqid();
+    // 检查图片文件是否存在
+    if (!file_exists($randomImage)) {
+        throw new Exception("Image file not found: $randomImage");
+    }
 
+    // 生成图片的 URL（移除掉开头的"./"）
+    $imageURL = 'https://api.wenturc.com/' . ltrim($randomImage, './');
 
-    // 禁用浏览器缓存
-    header('Cache-Control: no-cache, no-store, must-revalidate');
-    header('Pragma: no-cache');
-    header('Expires: 0');
+    // 判断是否要求返回 JSON 格式
+    if (isset($_GET['json'])) {
+        header('Content-Type: application/json');
+        echo json_encode(['url' => $imageURL], JSON_UNESCAPED_SLASHES);
+        exit;
+    }
 
     // 获取图片的格式
     $imgExtension = pathinfo($randomImage, PATHINFO_EXTENSION);
@@ -66,11 +72,13 @@ try {
             throw new Exception("Unsupported image format: $imgExtension");
     }
 
-    // 输出随机图片
-    readfile($randomImage);
+    // 添加图片 URL 到自定义头
+    header('X-Image-URL: ' . $imageURL);
+
+    // 输出图片内容，建议使用绝对路径
+    readfile(__DIR__ . '/' . $randomImage);
 
 } catch (Exception $e) {
-    // 错误处理
     header("HTTP/1.1 500 Internal Server Error");
     echo "Error: " . $e->getMessage();
     exit;
