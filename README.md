@@ -89,3 +89,59 @@ process_images(input_folder, output_folder_landscape, output_folder_portrait)
 #### 作用
 
 将横屏和竖屏的图片分开，并转化为webp格式，使用时注意修改文件路径
+
+---
+
+## Worker 版（Cloudflare Workers + R2 + KV）
+
+> 目标：保留当前 PHP 版的行为（UA 判断、随机图、`?json=1`、`X-Image-URL`、CORS），但把运行环境迁到边缘 Worker。
+
+### 为什么需要 R2/KV
+
+- Workers 不能像 PHP 那样直接读你仓库里的本地图片文件。
+- 图片建议放到 R2；超大的 `image_lists.json` 不建议打进 Worker bundle，所以放到 KV。
+
+### 路由兼容
+
+- `GET /`：按 UA 自动选择竖屏/横屏列表并随机返回图片（默认直接输出图片字节）
+- `GET /?json=1`：返回 `{"url": "..."}`
+- `GET /mobile`：强制竖屏随机
+- `GET /pc`：强制横屏随机
+- `GET /portrait/<file>`、`GET /landscape/<file>`：按路径直接取对应图片（用于 JSON 返回的 URL 可直接访问）
+
+### 部署步骤（概览）
+
+1) 创建 KV（用于存 `image_lists.json`）
+
+- Cloudflare Dashboard → Workers & Pages → KV
+- 创建后把 namespace id 填到 `worker/wrangler.toml` 的 `kv_namespaces[0].id`
+
+2) 创建 R2 Bucket（用于存图片）
+
+- Cloudflare Dashboard → R2
+- 创建后把 bucket name 填到 `worker/wrangler.toml` 的 `r2_buckets[0].bucket_name`
+
+3) 把 `image_lists.json` 写入 KV
+
+在 `worker/` 目录下运行：
+
+- `npm install`
+- `npm run kv:put:image-lists`
+
+4) 上传图片到 R2
+
+- R2 对象 key 建议为：`portrait/<文件名>` 和 `landscape/<文件名>`
+- 也就是说，把仓库里的 `portrait/`、`landscape/` 目录内容分别上传到 R2 同名前缀下
+
+5) 部署 Worker
+
+在 `worker/` 目录下运行：
+
+- `npm run deploy`
+
+提示：本仓库的 Worker 版使用 `@cloudflare/workers-types` 提供 runtime 全局类型；`worker/worker-configuration.d.ts` 只保留 Env 绑定类型，避免重复声明导致的 TS 报错。需要重新生成时在 `worker/` 目录运行 `npm run types`。
+
+### 可选配置
+
+- `worker/wrangler.toml` 里的 `BASE_URL`：用于 JSON 返回的 URL 前缀（不填则用请求的 `origin`）
+- `LIST_KEY`：KV 中存放图片列表 JSON 的 key（默认 `image_lists.json`）

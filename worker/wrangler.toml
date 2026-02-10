@@ -1,0 +1,22 @@
+name = "random-pic-api"
+main = "src/index.ts"
+compatibility_date = "2026-02-11"
+
+# 绑定：KV 用来存 image_lists.json（避免把超大的 JSON 打进 Worker bundle）
+kv_namespaces = [
+  # 这里的 id 需要替换成你自己的 KV namespace id。
+  # 先放一个“格式合法”的占位值，避免 wrangler 校验直接报错。
+  { binding = "IMAGE_KV", id = "00000000000000000000000000000000" }
+]
+
+# 绑定：R2 用来存图片对象（key 例如 portrait/xxx.webp）
+r2_buckets = [
+  # bucket_name 需要替换成你自己的 R2 bucket 名。
+  { binding = "IMAGES_BUCKET", bucket_name = "replace-with-your-r2-bucket" }
+]
+
+[vars]
+# KV 里存放 image_lists.json 的 key
+LIST_KEY = "image_lists.json"
+# 返回给客户端的 URL 前缀（默认用请求的 origin）；需要固定域名就填这里，例如 https://api.example.com
+BASE_URL = ""

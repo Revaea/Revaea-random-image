@@ -14,3 +14,4 @@ index.html
 /portrait
 *.html
 watch_photos.sh
+/worker/node_modules
