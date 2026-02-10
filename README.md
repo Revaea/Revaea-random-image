@@ -111,6 +111,11 @@ process_images(input_folder, output_folder_landscape, output_folder_portrait)
 
 ### 部署步骤（概览）
 
+0) 本地“分拣/生成列表”（二选一）
+
+- 如果你是从 `photos/` 一堆原图开始：直接用仓库根目录的 [classify.py](classify.py)（会把图片转 webp、按横竖屏分到 `landscape/`、`portrait/`，并生成 `image_lists.json`）。
+- 如果你已经有 `portrait/`、`landscape/` 两个目录，只想重新生成列表：在 `worker/` 目录运行 `npm run build:image-lists`（会扫描这两个目录并覆盖生成根目录的 `image_lists.json`，key 形如 `portrait/<file>`、`landscape/<file>`）。
+
 1) 创建 KV（用于存 `image_lists.json`）
 
 - Cloudflare Dashboard → Workers & Pages → KV
@@ -132,6 +137,10 @@ process_images(input_folder, output_folder_landscape, output_folder_portrait)
 
 - R2 对象 key 建议为：`portrait/<文件名>` 和 `landscape/<文件名>`
 - 也就是说，把仓库里的 `portrait/`、`landscape/` 目录内容分别上传到 R2 同名前缀下
+
+Windows 批量上传（PowerShell）：
+
+- `powershell -ExecutionPolicy Bypass -File ./worker/scripts/upload-r2.ps1 -Bucket <你的bucket名>`
 
 5) 部署 Worker
 

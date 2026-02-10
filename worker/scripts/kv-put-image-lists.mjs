@@ -5,8 +5,9 @@ const filePath = resolve("..", "image_lists.json");
 const listKey = process.env.LIST_KEY || "image_lists.json";
 
 // 用 wrangler CLI 写入 KV（需要你先在 worker/wrangler.toml 里填好 kv namespace id）
+// Windows 下直接 spawn `npx.cmd` 在某些环境会 EINVAL，这里改为 shell 模式更稳。
 const child = spawn(
-  process.platform === "win32" ? "npx.cmd" : "npx",
+  "npx",
   [
     "wrangler",
     "kv",
@@ -15,8 +16,9 @@ const child = spawn(
     listKey,
     `--path=${filePath}`,
     "--binding=IMAGE_KV",
+    "--remote",
   ],
-  { stdio: "inherit" }
+  { stdio: "inherit", shell: true }
 );
 
 child.on("exit", (code) => {
