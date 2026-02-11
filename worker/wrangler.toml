@@ -6,7 +6,7 @@ compatibility_date = "2026-02-11"
 kv_namespaces = [
   # 这里的 id 需要替换成你自己的 KV namespace id。
   # 先放一个“格式合法”的占位值，避免 wrangler 校验直接报错。
-  { binding = "IMAGE_KV", id = "00000000000000000000000000000000" }
+  { binding = "IMAGE_KV", id = "7e7e05c5eee548418bc1d52bdd8ba537" }
 ]
 
 # 绑定：R2 用来存图片对象（key 例如 portrait/xxx.webp）
