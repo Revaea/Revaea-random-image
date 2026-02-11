@@ -7,11 +7,15 @@
 /.well-known
 *.ini
 .htaccess
-*.json
-index.html
-/landscape
-/photos
-/portrait
-*.html
-watch_photos.sh
+/data
 /worker/node_modules
+
+# 图片列表（KV/R2 用），通常不需要进 git
+/image_lists.json
+
+# Worker/R2 上传脚本生成的本地状态文件
+/r2-upload-state-*.txt
+/upload-failed.txt
+
+# Wrangler 本地状态（可能由 dev / logs 生成）
+/worker/.wrangler

@@ -1,0 +1,16 @@
+{
+  "name": "random-pic-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "types": "wrangler types worker-configuration.d.ts --include-env=true --include-runtime=false",
+    "build:image-lists": "node ./scripts/build-image-lists.mjs",
+    "kv:put:image-lists": "node ./scripts/kv-put-image-lists.mjs"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260210.0",
+    "wrangler": "^4.64.0"
+  }
+}

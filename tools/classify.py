@@ -54,7 +54,7 @@ def process_images(input_folder, output_folder_landscape, output_folder_portrait
     processed_hashes = set()  # 用于记录已处理图片的哈希值
 
     for filename in os.listdir(input_folder):
-        if filename.endswith(('.jpg', '.jpeg', '.png')):
+        if filename.endswith((".jpg", ".jpeg", ".png")):
             image_path = os.path.join(input_folder, filename)
             orientation = get_image_orientation(image_path)
             try:
@@ -67,31 +67,29 @@ def process_images(input_folder, output_folder_landscape, output_folder_portrait
 
 
 def generate_image_lists(output_folder_landscape, output_folder_portrait, list_output_path):
-    image_lists = {
-        "small_screens": [],
-        "large_screens": []
-    }
+    image_lists = {"small_screens": [], "large_screens": []}
 
-    # 遍历横向图片
-    for filename in os.listdir(output_folder_landscape):
-        if filename.endswith('.webp'):
-            image_lists["large_screens"].append(os.path.join(output_folder_landscape, filename))
+    # 列表里的 key 使用 API/R2 的对象 key：portrait/<file>、landscape/<file>
+    for filename in sorted(os.listdir(output_folder_landscape)):
+        if filename.lower().endswith(".webp"):
+            image_lists["large_screens"].append("landscape/" + filename)
 
-    # 遍历纵向图片
-    for filename in os.listdir(output_folder_portrait):
-        if filename.endswith('.webp'):
-            image_lists["small_screens"].append(os.path.join(output_folder_portrait, filename))
+    for filename in sorted(os.listdir(output_folder_portrait)):
+        if filename.lower().endswith(".webp"):
+            image_lists["small_screens"].append("portrait/" + filename)
 
     # 保存列表为 JSON 文件
-    with open(list_output_path, "w") as json_file:
-        json.dump(image_lists, json_file)
+    with open(list_output_path, "w", encoding="utf-8") as json_file:
+        json.dump(image_lists, json_file, ensure_ascii=False)
     print(f"Image lists saved to {list_output_path}")
 
 
-# 指定输入和输出文件夹
-input_folder = "./photos"
-output_folder_landscape = "./landscape"
-output_folder_portrait = "./portrait"
+repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+# 指定输入和输出文件夹（统一在 data/image 下）
+input_folder = os.path.join(repo_root, "data", "image", "photos")
+output_folder_landscape = os.path.join(repo_root, "data", "image", "landscape")
+output_folder_portrait = os.path.join(repo_root, "data", "image", "portrait")
 
 # 确保输出文件夹存在
 os.makedirs(output_folder_landscape, exist_ok=True)
@@ -101,5 +99,5 @@ os.makedirs(output_folder_portrait, exist_ok=True)
 process_images(input_folder, output_folder_landscape, output_folder_portrait)
 
 # 生成图片路径列表
-list_output_path = "./image_lists.json"
+list_output_path = os.path.join(repo_root, "data", "image_lists.json")
 generate_image_lists(output_folder_landscape, output_folder_portrait, list_output_path)

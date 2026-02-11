@@ -2,9 +2,9 @@ import { readdir, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 
 const root = resolve("..");
-const portraitDir = join(root, "portrait");
-const landscapeDir = join(root, "landscape");
-const outPath = join(root, "image_lists.json");
+const portraitDir = join(root, "data", "image", "portrait");
+const landscapeDir = join(root, "data", "image", "landscape");
+const outPath = join(root, "data", "image_lists.json");
 
 const exts = new Set([".webp", ".jpg", ".jpeg", ".png", ".gif"]);
 

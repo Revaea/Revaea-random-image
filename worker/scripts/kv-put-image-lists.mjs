@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { resolve } from "node:path";
 
-const filePath = resolve("..", "image_lists.json");
+const filePath = resolve("..", "data", "image_lists.json");
 const listKey = process.env.LIST_KEY || "image_lists.json";
 
 // 用 wrangler CLI 写入 KV（需要你先在 worker/wrangler.toml 里填好 kv namespace id）

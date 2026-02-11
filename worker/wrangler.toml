@@ -12,7 +12,7 @@ kv_namespaces = [
 # 绑定：R2 用来存图片对象（key 例如 portrait/xxx.webp）
 r2_buckets = [
   # bucket_name 需要替换成你自己的 R2 bucket 名。
-  { binding = "IMAGES_BUCKET", bucket_name = "replace-with-your-r2-bucket" }
+  { binding = "IMAGES_BUCKET", bucket_name = "rd-image" }
 ]
 
 [vars]

@@ -1,9 +1,16 @@
 <?php
-// JSON 文件路径
-$jsonFilePath = './image_lists.json';
+$repoRoot = realpath(__DIR__ . '/..');
+if ($repoRoot === false) {
+    header("HTTP/1.1 500 Internal Server Error");
+    echo "Error: Failed to resolve repo root.";
+    exit;
+}
+
+// JSON 文件路径（位于 data/ 下）
+$jsonFilePath = $repoRoot . '/data/image_lists.json';
 
 // 检测用户代理以区分手机和电脑访问
-$userAgent = $_SERVER['HTTP_USER_AGENT'];
+$userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
 $isMobile = preg_match('/(android|iphone|ipad|ipod|blackberry|windows phone)/i', $userAgent);
 
 // 添加 CORS 头部
@@ -12,12 +19,10 @@ header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 try {
-    // 检查 JSON 文件是否存在
     if (!file_exists($jsonFilePath)) {
         throw new Exception("Image list file not found.");
     }
 
-    // 读取 JSON 文件
     $jsonContent = file_get_contents($jsonFilePath);
     $imageLists = json_decode($jsonContent, true);
 
@@ -25,35 +30,35 @@ try {
         throw new Exception("Failed to parse image list JSON.");
     }
 
-    // 根据设备类型选择图片列表
-    $selectedList = $isMobile ? $imageLists['small_screens'] : $imageLists['large_screens'];
-
+    $selectedList = $isMobile ? ($imageLists['small_screens'] ?? []) : ($imageLists['large_screens'] ?? []);
     if (empty($selectedList)) {
         throw new Exception("No images found in the selected list.");
     }
 
-    // 随机选择一张图片
     $randomImage = $selectedList[array_rand($selectedList)];
+    if (!is_string($randomImage) || $randomImage === '') {
+        throw new Exception("Invalid image path in list.");
+    }
 
-    // 检查图片文件是否存在
-    if (!file_exists($randomImage)) {
+    // 兼容列表里可能出现的 ./portrait/xx.webp 或 portrait/xx.webp
+    // 列表里的 key 仍然是 portrait/... 或 landscape/...，但文件实际在 data/image/ 下
+    $imageRelativePath = ltrim($randomImage, './');
+    $imageFsPath = $repoRoot . '/data/image/' . $imageRelativePath;
+
+    if (!file_exists($imageFsPath)) {
         throw new Exception("Image file not found: $randomImage");
     }
 
     // 生成图片的 URL（移除掉开头的"./"）
-    $imageURL = 'https://api.wenturc.com/' . ltrim($randomImage, './');
+    $imageURL = 'https://api.revaea.com/' . $imageRelativePath;
 
-    // 判断是否要求返回 JSON 格式
     if (isset($_GET['json'])) {
         header('Content-Type: application/json');
         echo json_encode(['url' => $imageURL], JSON_UNESCAPED_SLASHES);
         exit;
     }
 
-    // 获取图片的格式
-    $imgExtension = pathinfo($randomImage, PATHINFO_EXTENSION);
-
-    // 根据图片的格式设置 Content-Type
+    $imgExtension = pathinfo($imageFsPath, PATHINFO_EXTENSION);
     switch (strtolower($imgExtension)) {
         case 'webp':
             header('Content-Type: image/webp');
@@ -72,12 +77,8 @@ try {
             throw new Exception("Unsupported image format: $imgExtension");
     }
 
-    // 添加图片 URL 到自定义头
     header('X-Image-URL: ' . $imageURL);
-
-    // 输出图片内容，建议使用绝对路径
-    readfile(__DIR__ . '/' . $randomImage);
-
+    readfile($imageFsPath);
 } catch (Exception $e) {
     header("HTTP/1.1 500 Internal Server Error");
     echo "Error: " . $e->getMessage();

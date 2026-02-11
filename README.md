@@ -15,7 +15,7 @@
 
 #### PHP
 
-直接丢到有PHP和Nginx的环境中就行
+PHP 版入口在 [php/index.php](php/index.php)（PC/移动端入口分别在 [php/pc/index.php](php/pc/index.php) 和 [php/mobile/index.php](php/mobile/index.php)）。
 
 #### Docker
 
@@ -25,12 +25,10 @@ services:
     random-api:
         image: 'neixin/random-pic-api'
         volumes:
-# 竖屏图片
-            - './portrait:/var/www/html/portrait'
-# 横屏图片
-            - './landscape:/var/www/html/landscape'
+# 运行时数据（图片 + 列表）
+            - './data:/var/www/html/data'
         ports:
-            - '8080:80'
+            - '1584:1584'
 ```
 
 ### 图片处理
@@ -78,9 +76,9 @@ def process_images(input_folder, output_folder_landscape, output_folder_portrait
                 print(f"Error processing {image_path}: {e}. Skipping this image.")
 
 # 指定输入和输出文件夹
-input_folder = "/root/photos"
-output_folder_landscape = "/root/landscape"
-output_folder_portrait = "/root/portrait"
+input_folder = "/root/data/image/photos"
+output_folder_landscape = "/root/data/image/landscape"
+output_folder_portrait = "/root/data/image/portrait"
 
 # 执行转换
 process_images(input_folder, output_folder_landscape, output_folder_portrait)
@@ -113,8 +111,8 @@ process_images(input_folder, output_folder_landscape, output_folder_portrait)
 
 0) 本地“分拣/生成列表”（二选一）
 
-- 如果你是从 `photos/` 一堆原图开始：直接用仓库根目录的 [classify.py](classify.py)（会把图片转 webp、按横竖屏分到 `landscape/`、`portrait/`，并生成 `image_lists.json`）。
-- 如果你已经有 `portrait/`、`landscape/` 两个目录，只想重新生成列表：在 `worker/` 目录运行 `npm run build:image-lists`（会扫描这两个目录并覆盖生成根目录的 `image_lists.json`，key 形如 `portrait/<file>`、`landscape/<file>`）。
+- 如果你是从 `data/image/photos/` 一堆原图开始：直接用 [tools/classify.py](tools/classify.py)（会把图片转 webp、按横竖屏分到 `data/image/landscape/`、`data/image/portrait/`，并生成 `data/image_lists.json`）。
+- 如果你已经有 `data/image/portrait/`、`data/image/landscape/` 两个目录，只想重新生成列表：在 `worker/` 目录运行 `npm run build:image-lists`（会扫描这两个目录并覆盖生成 `data/image_lists.json`，key 仍为 `portrait/<file>`、`landscape/<file>`）。
 
 1) 创建 KV（用于存 `image_lists.json`）
 
@@ -137,6 +135,7 @@ process_images(input_folder, output_folder_landscape, output_folder_portrait)
 
 - R2 对象 key 建议为：`portrait/<文件名>` 和 `landscape/<文件名>`
 - 也就是说，把仓库里的 `portrait/`、`landscape/` 目录内容分别上传到 R2 同名前缀下
+- 当前仓库图片默认在 `data/image/portrait/`、`data/image/landscape/`
 
 Windows 批量上传（PowerShell）：
 
