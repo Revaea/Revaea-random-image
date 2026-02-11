@@ -2,6 +2,10 @@ name = "revaea-random-image"
 main = "src/index.ts"
 compatibility_date = "2026-02-11"
 
+# 已绑定自定义域名（例如 api.i0c.cc），不使用 workers.dev 预览域名
+workers_dev = false
+preview_urls = false
+
 # 绑定：KV 用来存 image_lists.json（避免把超大的 JSON 打进 Worker bundle）
 kv_namespaces = [
   # 这里的 id 需要替换成你自己的 KV namespace id。

@@ -48,6 +48,46 @@ if ($PSBoundParameters.ContainsKey('ContinueOnError')) {
   $ContinueOnErrorEnabled = [bool]$ContinueOnError
 }
 
+function Get-UniqueNonEmptyLineCount([string]$Path) {
+  if (-not $Path -or $Path.Trim() -eq '') { return 0 }
+  if (-not (Test-Path $Path)) { return 0 }
+
+  $set = New-Object 'System.Collections.Generic.HashSet[string]'
+  foreach ($line in (Get-Content -Path $Path -ErrorAction SilentlyContinue)) {
+    $k = $line.Trim()
+    if ($k) { [void]$set.Add($k) }
+  }
+  return $set.Count
+}
+
+function Write-UploadSummary([string]$Phase, [string]$RootPath, [string]$StatePath, [string]$FailedPath) {
+  try {
+    $portraitDir = Join-Path $RootPath 'data\image\portrait'
+    $landscapeDir = Join-Path $RootPath 'data\image\landscape'
+
+    $portraitCount = 0
+    $landscapeCount = 0
+
+    if (Test-Path $portraitDir) {
+      $portraitCount = (Get-ChildItem -Path $portraitDir -File -Recurse -ErrorAction SilentlyContinue | Measure-Object).Count
+    }
+    if (Test-Path $landscapeDir) {
+      $landscapeCount = (Get-ChildItem -Path $landscapeDir -File -Recurse -ErrorAction SilentlyContinue | Measure-Object).Count
+    }
+
+    $localTotal = $portraitCount + $landscapeCount
+    $completed = Get-UniqueNonEmptyLineCount $StatePath
+    $failed = Get-UniqueNonEmptyLineCount $FailedPath
+    $remaining = [Math]::Max(0, $localTotal - $completed)
+
+    Write-Host "[$Phase] Local files: $localTotal (portrait=$portraitCount, landscape=$landscapeCount)"
+    Write-Host "[$Phase] Completed(state): $completed, Failed(list): $failed, Remaining(est): $remaining"
+    Write-Host "[$Phase] Concurrency=$Concurrency, MaxRetries=$MaxRetries, ContinueOnError=$ContinueOnErrorEnabled"
+  } catch {
+    Write-Warning "Failed to compute upload summary: $($_.Exception.Message)"
+  }
+}
+
 function Get-ContentType([string]$Path) {
   $ext = [System.IO.Path]::GetExtension($Path).ToLowerInvariant()
   switch ($ext) {
@@ -480,12 +520,24 @@ if (Test-Path $failedPath) {
 }
 
 Write-Host "State file: $StateFile"
-Publish-R2Folder (Join-Path $root 'data\image\portrait') 'portrait' $failedPath
-Publish-R2Folder (Join-Path $root 'data\image\landscape') 'landscape' $failedPath
+Write-UploadSummary 'START' $root $StateFile $failedPath
 
-if ($script:FailedKeys.Count -gt 0) {
-  $script:FailedKeys | Sort-Object | Out-File -FilePath $failedPath -Encoding utf8
-  Write-Warning "Some uploads failed. See $failedPath"
+$fatalError = $null
+try {
+  Publish-R2Folder (Join-Path $root 'data\image\portrait') 'portrait' $failedPath
+  Publish-R2Folder (Join-Path $root 'data\image\landscape') 'landscape' $failedPath
+} catch {
+  $fatalError = $_
+} finally {
+  if ($script:FailedKeys.Count -gt 0) {
+    $script:FailedKeys | Sort-Object | Out-File -FilePath $failedPath -Encoding utf8
+    Write-Warning "Some uploads failed. See $failedPath"
+  }
+  Write-UploadSummary 'END' $root $StateFile $failedPath
+}
+
+if ($fatalError) {
+  throw $fatalError
 }
 
 Write-Host 'Done.'
