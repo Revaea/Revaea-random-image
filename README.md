@@ -31,17 +31,29 @@ PHP 版入口在 [php/index.php](php/index.php)（PC/移动端入口分别在 [p
 
 ## Docker
 
+不需要 DockerHub：镜像在本地从本仓库的 Dockerfile 构建。
+
 ```yml
 version: '3.9'
 services:
     random-api:
-        image: 'neixin/random-pic-api'
+        build: .
+        image: revaea-random-image:local
         volumes:
-# 运行时数据（图片 + 列表）
-            - './data:/var/www/html/data'
+            # 运行时数据（图片 + 列表）
+            - ./data:/var/www/html/data
         ports:
-            - '1584:1584'
+            - "1584:1584"
 ```
+
+启动：
+
+- `docker compose up -d --build`
+
+或手动构建/运行：
+
+- `docker build -t revaea-random-image:local .`
+- `docker run --rm -p 1584:1584 -v "${PWD}/data:/var/www/html/data" revaea-random-image:local`
 
 ## Worker 版（Cloudflare Workers + R2 + KV）
 
