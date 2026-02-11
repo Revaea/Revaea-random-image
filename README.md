@@ -13,6 +13,10 @@
 
 ### 部署
 
+准备目录结构（Linux/Windows）：
+
+- `python ./tools/init.py`
+
 #### PHP（ 原仓库 https://github.com/Nei-Xin/random-pic-api ）
 
 PHP 版入口在 [php/index.php](php/index.php)（PC/移动端入口分别在 [php/pc/index.php](php/pc/index.php) 和 [php/mobile/index.php](php/mobile/index.php)）。
