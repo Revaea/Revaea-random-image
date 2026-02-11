@@ -1,4 +1,4 @@
-name = "random-pic-api"
+name = "revaea-random-image"
 main = "src/index.ts"
 compatibility_date = "2026-02-11"
 
