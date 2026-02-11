@@ -2,7 +2,7 @@ param(
   [Parameter(Mandatory=$true)]
   [string]$Bucket,
 
-  # 仓库根目录（默认：脚本所在位置往上两级，即 repo root）
+  # 仓库根目录（默认：脚本所在位置往上一层，即 repo root）
   [Parameter(Mandatory=$false)]
   [string]$Root,
 
@@ -22,7 +22,7 @@ param(
   [Parameter(Mandatory=$false)]
   [switch]$NoSkipIfInState,
 
-  # state 文件路径（默认放在仓库根目录下：r2-upload-state-<bucket>.txt）
+  # state 文件路径（默认放在 data/ 下：data/r2-upload-state-<bucket>.txt）
   [Parameter(Mandatory=$false)]
   [string]$StateFile,
 
@@ -140,7 +140,7 @@ function Get-R2UploadItems([string]$Folder, [string]$Prefix) {
   $files = Get-ChildItem -Path $base -File -Recurse
 
   foreach ($f in $files) {
-    $rel = $f.FullName.Substring($base.Path.Length).TrimStart('\','/')
+    $rel = $f.FullName.Substring($base.Path.Length).TrimStart('\\','/')
     $key = ($Prefix + '/' + ($rel -replace '\\','/'))
 
     [pscustomobject]@{
@@ -498,7 +498,7 @@ function Publish-R2Folder([string]$Folder, [string]$Prefix, [string]$FailedPath)
 }
 
 if (-not $Root -or $Root.Trim() -eq '') {
-  $Root = Join-Path $PSScriptRoot '..\..'
+  $Root = Join-Path $PSScriptRoot '..'
 }
 
 $root = Resolve-Path $Root
