@@ -9,5 +9,5 @@ COPY php /var/www/html/php
 EXPOSE 1584
 
 # 设置容器启动时执行的命令
-CMD ["php", "-S", "0.0.0.0:1584", "-t", "/var/www/html/php"]
+CMD ["php", "-S", "0.0.0.0:1584", "-t", "/var/www/html/php", "/var/www/html/php/index.php"]
 

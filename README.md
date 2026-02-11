@@ -17,6 +17,10 @@
 
 PHP 版入口在 [php/index.php](php/index.php)（PC/移动端入口分别在 [php/pc/index.php](php/pc/index.php) 和 [php/mobile/index.php](php/mobile/index.php)）。
 
+本地运行（支持 `GET /portrait/<file>`、`GET /landscape/<file>` 直取，以便 `?json=1` 返回的 URL 可直接访问）：
+
+- `php -S 127.0.0.1:1584 -t php php/index.php`
+
 #### Docker
 
 ```yml
