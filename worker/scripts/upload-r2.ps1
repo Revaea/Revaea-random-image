@@ -16,7 +16,7 @@ param(
 
   # 遇到单个文件失败时是否继续（默认：继续，把失败写入 upload-failed 文件）
   [Parameter(Mandatory=$false)]
-  [switch]$ContinueOnError = $true,
+  [switch]$ContinueOnError,
 
   # 关闭去重/断点续传（默认开启）：不读取/不写入 state 文件，每次都尝试上传
   [Parameter(Mandatory=$false)]
@@ -40,6 +40,13 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $SkipIfInState = -not $NoSkipIfInState
+
+# Switch 参数不建议设置默认值（PSScriptAnalyzer: PSAvoidDefaultValueSwitchParameter）。
+# 这里实现“默认继续；显式传 -ContinueOnError:$false 才停止”。
+$ContinueOnErrorEnabled = $true
+if ($PSBoundParameters.ContainsKey('ContinueOnError')) {
+  $ContinueOnErrorEnabled = [bool]$ContinueOnError
+}
 
 function Get-ContentType([string]$Path) {
   $ext = [System.IO.Path]::GetExtension($Path).ToLowerInvariant()
@@ -111,7 +118,7 @@ function Invoke-R2UploadsParallel(
   [Parameter(Mandatory=$true)][int]$MaxRetriesLocal,
   [Parameter(Mandatory=$true)][int]$InitialDelaySecondsLocal,
   [Parameter(Mandatory=$true)][switch]$CheckRemoteExistsLocal,
-  [Parameter(Mandatory=$true)][switch]$ContinueOnErrorLocal,
+  [Parameter(Mandatory=$true)][bool]$ContinueOnErrorLocal,
   [Parameter(Mandatory=$true)][hashtable]$UploadedLocal,
   [Parameter(Mandatory=$true)][string]$StateFileLocal,
   [Parameter(Mandatory=$true)][switch]$SkipIfInStateLocal,
@@ -420,7 +427,7 @@ function Publish-R2Folder([string]$Folder, [string]$Prefix, [string]$FailedPath)
           }
         }
 
-        if ($ContinueOnError) {
+        if ($ContinueOnErrorEnabled) {
           Write-Warning $msg
           continue
         }
@@ -431,7 +438,7 @@ function Publish-R2Folder([string]$Folder, [string]$Prefix, [string]$FailedPath)
     }
   } else {
     Write-Host "Uploading with concurrency=$Concurrency (items=$($items.Count))"
-    $results = Invoke-R2UploadsParallel -Items $items -Throttle $Concurrency -MaxRetriesLocal $MaxRetries -InitialDelaySecondsLocal $InitialDelaySeconds -CheckRemoteExistsLocal:$CheckRemoteExists -ContinueOnErrorLocal:$ContinueOnError -UploadedLocal $uploaded -StateFileLocal $StateFile -SkipIfInStateLocal:$SkipIfInState -FailedPathLocal $FailedPath
+    $results = Invoke-R2UploadsParallel -Items $items -Throttle $Concurrency -MaxRetriesLocal $MaxRetries -InitialDelaySecondsLocal $InitialDelaySeconds -CheckRemoteExistsLocal:$CheckRemoteExists -ContinueOnErrorLocal $ContinueOnErrorEnabled -UploadedLocal $uploaded -StateFileLocal $StateFile -SkipIfInStateLocal:$SkipIfInState -FailedPathLocal $FailedPath
 
     foreach ($r in $results) {
       if (-not $r.Success) {
@@ -439,7 +446,7 @@ function Publish-R2Folder([string]$Folder, [string]$Prefix, [string]$FailedPath)
       }
     }
 
-    if (-not $ContinueOnError -and $failed.Count -gt 0) {
+    if (-not $ContinueOnErrorEnabled -and $failed.Count -gt 0) {
       throw "Upload failed (parallel): $($failed[0])"
     }
   }
