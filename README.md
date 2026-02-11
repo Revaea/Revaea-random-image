@@ -16,6 +16,21 @@
 
 - `python ./tools/init.py`
 
+标准目录结构：
+
+```text
+data/
+    image/
+        photos/        # 原始图片放这里（tools/classify.py 会读取）
+        portrait/      # 输出：竖屏 webp（R2 key: portrait/<file>）
+        landscape/     # 输出：横屏 webp（R2 key: landscape/<file>）
+    image_lists.json # 输出：图片 key 列表（上传到 KV，key 默认 image_lists.json）
+
+    # 以下为上传脚本运行时生成（用于断点续传/失败记录）：
+    r2-upload-state-<bucket>.txt
+    upload-failed-<bucket>.txt
+```
+
 ## PHP（ 原仓库 https://github.com/Nei-Xin/random-pic-api ）
 
 PHP 版入口在 [php/index.php](php/index.php)（PC/移动端入口分别在 [php/pc/index.php](php/pc/index.php) 和 [php/mobile/index.php](php/mobile/index.php)）。
@@ -104,7 +119,7 @@ services:
 
 Windows 批量上传（PowerShell）：
 
-- `powershell -ExecutionPolicy Bypass -File ./worker/scripts/upload-r2.ps1 -Bucket <你的bucket名>`
+- `powershell -ExecutionPolicy Bypass -File ./tools/upload-r2.ps1 -Bucket <你的bucket名>`
 
 5) 部署 Worker
 
