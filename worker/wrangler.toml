@@ -24,3 +24,8 @@ r2_buckets = [
 LIST_KEY = "image_lists.json"
 # 返回给客户端的 URL 前缀（默认用请求的 origin）；需要固定域名就填这里，例如 https://api.example.com
 BASE_URL = ""
+
+[observability]
+[observability.logs]
+enabled = true
+invocation_logs = true
