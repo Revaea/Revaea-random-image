@@ -140,7 +140,7 @@ function Get-R2UploadItems([string]$Folder, [string]$Prefix) {
   $files = Get-ChildItem -Path $base -File -Recurse
 
   foreach ($f in $files) {
-    $rel = $f.FullName.Substring($base.Path.Length).TrimStart('\\','/')
+    $rel = $f.FullName.Substring($base.Path.Length).TrimStart('\','/')
     $key = ($Prefix + '/' + ($rel -replace '\\','/'))
 
     [pscustomobject]@{

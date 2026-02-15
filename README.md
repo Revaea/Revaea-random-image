@@ -119,12 +119,12 @@ services:
 
 Windows 批量上传（PowerShell）：
 
-- `powershell -ExecutionPolicy Bypass -File ./tools/upload-r2.ps1 -Bucket <你的bucket名>`
+- `powershell -ExecutionPolicy Bypass -File ./tools/upload-r2.ps1 -Bucket rd-image`
 
 Windows 批量上传（rclone sync）：
 
-- `rclone sync -P --fast-list --transfers 8 --checkers 16 --retries 10 --retries-sleep 5s --log-level INFO --log-file .\data\rclone-sync-portrait.log .\data\image\portrait r2-hls:<你的bucket名>/portrait`
-- `rclone sync -P --fast-list --transfers 8 --checkers 16 --retries 10 --retries-sleep 5s --log-level INFO --log-file .\data\rclone-sync-landscape.log .\data\image\landscape r2-hls:<你的bucket名>/landscape`
+- `rclone sync -P --fast-list --transfers 8 --checkers 16 --retries 10 --retries-sleep 5s --log-level INFO --log-file .\data\rclone-sync-portrait.log .\data\image\portrait r2-hls:rd-image/portrait`
+- `rclone sync -P --fast-list --transfers 8 --checkers 16 --retries 10 --retries-sleep 5s --log-level INFO --log-file .\data\rclone-sync-landscape.log .\data\image\landscape r2-hls:rd-image/landscape`
 
 5) 部署 Worker
 
