@@ -1,3 +1,5 @@
+import { getImageListTtlMs, getImageResponseCacheControl } from "../config/config";
+
 type ImageLists = {
   small_screens: string[];
   large_screens: string[];
@@ -47,7 +49,7 @@ function guessContentTypeFromKey(key: string): string {
 async function loadImageLists(env: Env): Promise<ImageLists> {
   const now = Date.now();
   // 简单内存缓存：10 分钟
-  if (cachedLists && now - cachedListsLoadedAt < 10 * 60 * 1000) {
+  if (cachedLists && now - cachedListsLoadedAt < getImageListTtlMs()) {
     return cachedLists;
   }
 
@@ -84,7 +86,7 @@ async function serveR2Object(env: Env, key: string, request: Request): Promise<R
   const headers = new Headers(corsHeaders());
   headers.set("Content-Type", object.httpMetadata?.contentType || guessContentTypeFromKey(key));
   // 交给 CDN 缓存；内容变更通常靠换文件名/ETag
-  headers.set("Cache-Control", "public, max-age=86400");
+  headers.set("Cache-Control", getImageResponseCacheControl());
 
   if (object.etag) headers.set("ETag", object.etag);
 
