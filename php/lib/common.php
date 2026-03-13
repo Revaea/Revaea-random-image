@@ -61,6 +61,14 @@ function ri_is_options_request(): bool {
     return (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS');
 }
 
+function ri_prepare_request(): void {
+    ri_send_cors_headers();
+
+    if (ri_is_options_request()) {
+        exit;
+    }
+}
+
 function ri_get_request_path(): string {
     $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
     if (!is_string($requestPath) || $requestPath === '') {
@@ -231,4 +239,18 @@ function ri_output_json(array $payload): void {
     header('Content-Type: application/json');
     echo json_encode($payload, JSON_UNESCAPED_SLASHES);
     exit;
+}
+
+function ri_output_random_image_response(string $repoRoot, string $listKey): void {
+    $imageData = ri_get_random_image_data($repoRoot, $listKey);
+    $imageRelativePath = $imageData['relative_path'];
+    $imageFsPath = $imageData['file_path'];
+    $imageURL = ri_build_image_url(ri_get_request_origin(), $imageRelativePath);
+
+    if (isset($_GET['json'])) {
+        ri_output_json(['url' => $imageURL]);
+    }
+
+    header('X-Image-URL: ' . $imageURL);
+    ri_output_image_file($imageFsPath);
 }
