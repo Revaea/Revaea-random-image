@@ -23,6 +23,18 @@ function corsHeaders(): Record<string, string> {
   };
 }
 
+function errorHeaders(): Headers {
+  const headers = new Headers(corsHeaders());
+  headers.set("Content-Type", "text/plain; charset=UTF-8");
+  headers.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+  headers.set("Pragma", "no-cache");
+  return headers;
+}
+
+function errorResponse(status: number, message: string): Response {
+  return new Response(message, { status, headers: errorHeaders() });
+}
+
 function isMobileUA(userAgent: string | null): boolean {
   if (!userAgent) return false;
   return /(android|iphone|ipad|ipod|blackberry|windows phone)/i.test(userAgent);
@@ -77,10 +89,15 @@ function buildBaseUrl(env: Env, requestUrl: URL): string {
   return requestUrl.origin;
 }
 
-async function serveR2Object(env: Env, key: string, request: Request): Promise<Response> {
+async function serveR2Object(
+  env: Env,
+  key: string,
+  request: Request,
+  options?: { missingStatus?: number; missingMessage?: string }
+): Promise<Response> {
   const object = await env.IMAGES_BUCKET.get(key);
   if (!object) {
-    return new Response("Not Found", { status: 404, headers: corsHeaders() });
+    return errorResponse(options?.missingStatus ?? 404, options?.missingMessage ?? "Not Found");
   }
 
   const headers = new Headers(corsHeaders());
@@ -107,7 +124,7 @@ async function handleRandom(env: Env, request: Request, mode: "auto" | "mobile" 
   const useMobile = mode === "mobile" || (mode === "auto" && isMobileUA(userAgent));
   const selected = useMobile ? lists.small_screens : lists.large_screens;
   if (!selected.length) {
-    return new Response("No images found", { status: 500, headers: corsHeaders() });
+    return errorResponse(500, "No images found");
   }
 
   const rawPath = pickRandom(selected);
@@ -121,10 +138,15 @@ async function handleRandom(env: Env, request: Request, mode: "auto" | "mobile" 
     return new Response(JSON.stringify({ url: imageUrl }), { status: 200, headers });
   }
 
-  const response = await serveR2Object(env, key, request);
+  const response = await serveR2Object(env, key, request, {
+    missingStatus: 500,
+    missingMessage: `Error: Image object not found: ${key}`,
+  });
   // 跟 PHP 版一致：附带 X-Image-URL
   const headers = new Headers(response.headers);
-  headers.set("X-Image-URL", imageUrl);
+  if (response.ok || response.status === 304) {
+    headers.set("X-Image-URL", imageUrl);
+  }
   return new Response(response.body, { status: response.status, headers });
 }
 
@@ -157,10 +179,10 @@ export default {
         return await serveR2Object(env, key, request);
       }
 
-      return new Response("Not Found", { status: 404, headers: corsHeaders() });
+      return errorResponse(404, "Not Found");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      return new Response(`Error: ${message}`, { status: 500, headers: corsHeaders() });
+      return errorResponse(500, `Error: ${message}`);
     }
   },
 };
