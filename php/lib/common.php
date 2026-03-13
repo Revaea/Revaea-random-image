@@ -26,6 +26,50 @@ function ri_get_repo_root(): string {
     return $repoRoot;
 }
 
+function ri_get_request_origin(): string {
+    $proto = $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '';
+    if ($proto !== '') {
+        $proto = strtolower(trim(explode(',', $proto)[0]));
+    } else {
+        $proto = $_SERVER['REQUEST_SCHEME'] ?? '';
+        if ($proto === '') {
+            $https = $_SERVER['HTTPS'] ?? '';
+            $proto = ($https && strtolower($https) !== 'off') ? 'https' : 'http';
+        }
+    }
+
+    $host = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? ($_SERVER['HTTP_HOST'] ?? ($_SERVER['SERVER_NAME'] ?? 'localhost'));
+    $host = trim(explode(',', $host)[0]);
+    return $proto . '://' . $host;
+}
+
+function ri_is_mobile_user_agent(?string $userAgent): bool {
+    if (!$userAgent) {
+        return false;
+    }
+
+    return preg_match('/(android|iphone|ipad|ipod|blackberry|windows phone)/i', $userAgent) === 1;
+}
+
+function ri_send_cors_headers(): void {
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization');
+}
+
+function ri_is_options_request(): bool {
+    return (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS');
+}
+
+function ri_get_request_path(): string {
+    $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+    if (!is_string($requestPath) || $requestPath === '') {
+        return '/';
+    }
+
+    return $requestPath;
+}
+
 function ri_get_mime_type(string $ext): string {
     switch (strtolower($ext)) {
         case 'webp':
@@ -147,5 +191,44 @@ function ri_output_image_file(string $filePath): void {
     ri_set_content_type_from_path($filePath);
     ri_set_image_cache_headers($filePath);
     readfile($filePath);
+    exit;
+}
+
+function ri_try_serve_static_image_route(string $repoRoot, string $requestPath): void {
+    foreach (['/portrait/' => 'portrait', '/landscape/' => 'landscape'] as $prefixPath => $folder) {
+        if (strncmp($requestPath, $prefixPath, strlen($prefixPath)) !== 0) {
+            continue;
+        }
+
+        $relative = substr($requestPath, strlen($prefixPath));
+        $relative = rawurldecode($relative);
+
+        $baseDir = realpath($repoRoot . '/data/image/' . $folder);
+        if ($baseDir === false) {
+            ri_send_internal_error('Image base folder not found.');
+        }
+
+        $candidate = $baseDir . DIRECTORY_SEPARATOR . str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $relative);
+        $real = realpath($candidate);
+
+        if ($real === false || (strncmp($real, $baseDir . DIRECTORY_SEPARATOR, strlen($baseDir . DIRECTORY_SEPARATOR)) !== 0 && $real !== $baseDir)) {
+            ri_send_not_found();
+        }
+
+        if (!is_file($real)) {
+            ri_send_not_found();
+        }
+
+        ri_output_image_file($real);
+    }
+}
+
+function ri_build_image_url(string $origin, string $imageRelativePath): string {
+    return rtrim($origin, '/') . '/' . ltrim($imageRelativePath, '/');
+}
+
+function ri_output_json(array $payload): void {
+    header('Content-Type: application/json');
+    echo json_encode($payload, JSON_UNESCAPED_SLASHES);
     exit;
 }
